@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<script src="allOfIt.js"></script>
+<script>
+	//console.log(allOfIt);
+	var theLongStr = "";
+	//var curLayer = 0;
+	//var inPane = document.getElementById("inputMain");
+
+	
+	function splitLayers(gCode){
+		let hre = gCode.split(' change layer ');
+		//let curHt = hre.indexOf('\n')
+		//let curHit = parseFloat(hre);
+		//console.log(hre);
+		return hre;
+	}
+	
+	function splitPerimeters(gCode){
+		let hre = gCode.split('move to first perimeter point');
+		console.log(hre);
+		return hre;
+	}
+	
+	function parseGcode(perimCode) {
+
+		let cutOut = "";
+		let leavIn = "";
+		//document.getElementById('outputMain').value += perimCode + "\n\n\n\n\n\n\n\n\n\n";
+		for (let x in perimCode){
+
+			if (x % 2) {
+				cutOut += perimCode[x];
+			} else {
+				leavIn += perimCode[x];
+			}
+			
+		}
+		//document.getElementById('outputMain').value += leavIn + "\n\nthe"  + "\n\n" + cutOut + "\n\n";
+		return [leavIn,cutOut];
+	}
+	
+	function splitSections(os){
+	
+		let f = os.split('; Filament gcode');
+		let g = f[1].split('; Filament-specific end gcode');
+		return [f[0],g[0],g[1],g[2],f[2]];
+	}
+	
+	function reco (){
+		let gString = '';
+		let os = document.getElementById('inputMain').value
+		let sections = splitSections(os);
+		
+		gString += sections[0];
+		//let firstChangedLayer = true;
+		let layers = splitLayers(sections[1]);
+		
+		
+		for (let y in layers){
+			if ((y > 1)&&(y < (layers.length-1))){
+				let perimeters = splitPerimeters(layers[y]);
+				let curStr = parseGcode(perimeters);
+				if (y == 2){
+					
+					let tempStr = '';
+					let b = curStr[1].split('\n');
+					for (let p in b){
+						if (b[p].includes(' E')){
+							let s = b[p].split(' E');
+							let ext = parseFloat(s[1]);
+							ext = ext*1.5;
+							ext = ext.toFixed(5);
+							let rln = s[0] + ' E' + ext + ' ; \n';
+							tempStr += rln;
+						}else{
+							tempStr += b[p] + '\n';
+						}
+					}
+					let ghb = ((y*0.2)+0.1);
+					gString += curStr[0] + '\nG1 Z' + ghb.toFixed(3) + ' F7800.000 ;\n' + tempStr;
+				}else{
+					let gha = ((y*0.2)+0.1);
+					gString += curStr[0] + '\nG1 Z' + gha.toFixed(3) + ' F7800.000 ;\n' + curStr[1];
+				}
+				//gString += splitPerimeters(layers[y]) + "\n\n" + y + "\n\n" + layers[y];
+			}else if (y == (layers.length-1)){
+				//extrusion * .5
+				let perimeters = splitPerimeters(layers[y]);
+				let curStr = parseGcode(perimeters);
+				let tempString = '';
+				
+				let u = curStr[1].split('\n');
+				for (let o in u){
+					if (u[o].includes(' E')){
+						let t = u[o].split(' E');
+						let ex = parseFloat(t[1]);
+						ex = ex*0.5;
+						ex = ex.toFixed(5);
+						let rl = t[0] + ' E' + ex + ' ; \n';
+						tempString += rl;
+					}else{
+						tempString += u[o] + '\n';
+					}
+				}
+				gString += curStr[0] + tempString;
+			}else {
+				gString += layers[y];
+			}
+		}
+		gString += sections[2] + sections[3] + sections[4];;
+		
+		document.getElementById('outputMain').value = gString;
+	}
+
+	/*
+	function Wall(position,lineLength,raised,zHeight){
+		this.position = position;
+		this.lineLength = lineLength;
+		this.raised = raised;
+		this.zHeight = zHeight;
+	}
+	function buildG (a){
+		let gType = 0;
+		let feedRate, xPos, yPos, zPos, ePos;
+		let isItComment = false;
+		let isItM = false;
+		let afterThought = false;
+		let wallType = false;
+		let curLayer = 0;
+		let lineNum = 0;
+		
+		for (let x in a){
+			let curLine = a[x].split(' ');
+			let extrudeAmt = 0;
+			
+			gType = undefined;
+			
+			for (let y in curLine){
+				let curSubCommand = curLine[y];
+				
+				switch (curSubCommand.charAt(0)){
+					case ';':													// is a comment
+						//ar[x] = new gCommand(true,';',ar[x]);
+						if(y == 0) {
+							isItComment = true; 
+							if (curSubCommand.startsWith(';TYPE:WALL-OUTER')){
+								wallType = 'out';
+							} else if (curSubCommand.startsWith(';TYPE:WALL-INNER')){ 
+								wallType = 'in';
+							} else if (curSubCommand.startsWith(';TYPE:SKIN')){ 
+								wallType = false;
+							} else if (curSubCommand.startsWith(';TYPE:FILL')){ 
+								wallType = false;
+							} else if (curSubCommand.startsWith(';LAYER:')){ 
+								wallType = false;
+								let curLayerAr = curSubCommand.split(':');
+								//console.log(curLayerAr);
+								curLayer = parseInt(curLayerAr[1]);
+								
+								//console.log(curLayer);
+								
+							}
+						}
+						break;
+					case 'M':
+						//ar[x]= new gCommand(false,'M',ar[x]);
+						if(y == 0) { isItM = true; }
+						break;
+					case 'G':
+						gType = parseInt(curSubCommand.substring(1,));
+						break;
+					case 'F':
+						feedRate = parseFloat(curSubCommand.substring(1,));
+						break;
+					case 'X':
+						xPos = parseFloat(curSubCommand.substring(1,));
+						break;
+					case 'Y':
+						yPos = parseFloat(curSubCommand.substring(1,));
+						break;
+					case 'Z':
+						zPos = parseFloat(curSubCommand.substring(1,));
+						break;
+					case 'E':
+						ePos = parseFloat(curSubCommand.substring(1,));
+						extrudeAmt = ePos - a[x-1].e;
+						break;
+					default:
+						//ar[x] = new gCommand(false,'?',ar[x]);
+						break;
+				}
+				if (isItComment){
+					break;
+				}
+				if (isItM){
+					break;
+				}
+				if (afterThought){
+					break;
+				}
+				
+				
+			}
+			//if (ePos == NaN) { ePos = 0; }
+			a[x] = new gCommand(isItComment, curLine[0].charAt(0), a[x], gType, feedRate, xPos, yPos, zPos, ePos, extrudeAmt, curLayer);
+			console.log(curLayer);
+			if (wallType){
+				a[x].wallType = wallType;
+				//a[x].onLine = lineNum;
+			}
+			isItComment = false;
+			isItM = false;
+			afterThought = false;
+			//str+=ar[x] + '\n';
+		}
+		return a;
+	}
+	function gCommand(comment,lineType, gString, gType, feedRate, xPos, yPos, zPos, ePos, extrudeAmt, curLayer){
+		this.isComment = comment;
+		this.lineType = lineType;
+		this.gString = gString;
+		this.gType = gType;
+		this.feedRate = feedRate;
+		this.x = xPos;
+		this.y = yPos
+		this.z = zPos;
+		this.e = ePos;
+		this.extrudeAmt = extrudeAmt;
+		//this.wallLength = wallLength;
+		this.wallType = undefined;
+		this.atLayer = curLayer;
+		this.atLine = undefined;
+		
+		gCommand.ls = function () {
+			return "TYPE: " + this.gType + " | Z: " + this.z + ' | LAYER: ' + this.atLayer + ' | LINE: ';
+			};
+	}
+	
+	function wall(len,typ,lay,lin){
+		this.wlength = len;
+		this.wtype = typ;
+		this.wlayer = lay;
+		this.onLine = lin;
+		this.spans = [];
+	}
+	
+	function gCode(inPut) {
+//		var r = inPut.split(';LAYER_COUNT:');
+//		var t = r[1].split(';End of Gcode');
+		return parseByLine(inPut);
+	}
+	function grabLayerHeight(inPut){
+		var str = '';
+		
+		var q = inPut.split(';Layer height: ');
+		var w = q[1].split('\n');
+		return parseFloat(w[0]);
+	}
+	function parseByLine(wholeThing){
+		return wholeThing.split("\n");
+	}
+	function getDistance(xy){				// 	x1	y1	x2	y2
+		let z = 0;
+		let y = xy[1] - xy[2];
+		let x = xy[0] - xy[3];
+		
+		return Math.abs(Math.sqrt(x * x + y * y));
+	}
+	function buildWalls (c){
+		let walls = [];
+		//let startOfCurWall = 0;
+		let drawingWall = false;
+		let dist = 0;
+		let lineNum = 0;
+		let atLay = 0;
+		
+		for (var x in c){
+			if ( c[x].gType == 0 ){
+				if ( drawingWall ){
+					//endWall(curWall);
+					c[x].atLine = lineNum+1;
+					walls.push(new wall(dist , c[x].wallType , c[x].atLayer , lineNum++));
+					if (c[x].atLayer > atLay){
+						//lineNum = 0;
+						atLay = c[x].atLayer;
+					}
+					dist = 0;
+					drawingWall = false;
+				}else{
+					lineNum = 0;
+				}
+			} else if ( c[x].gType == 1 && c[x].extrudeAmt > 0){
+				if (c[x].wallType){
+					if ( drawingWall ){
+						c[x].atLine = lineNum;
+						dist += getDistance( [c[x].x , c[x].y , c[x-1].x , c[x-1].y] );
+					} else {
+						dist += getDistance( [c[x].x , c[x].y , c[x-1].x , c[x-1].y] );
+						drawingWall = true;
+					}
+				}
+			
+			} else if ( c[x].gType == 1 && c[x].extrudeAmt == 0){
+				
+			}
+			//c[x].atLine = walls[this.length].onLine;
+		}
+		let i = '';
+		for (var u in walls){ i += walls[u].wlength + " | " + walls[u].wtype + " | " + walls[u].wlayer + " | " + walls[u].onLine + '\n';}
+		//for (let o in c) { i += c[o].gString + ' : ' + c[o].atLine + '\n' };
+		document.getElementById("outputMain").value = i;
+		return walls;
+	}
+
+	function raiseWalls(wallsToRaise,c,hite){
+		for (let x in c){
+			
+		}
+	}
+	
+	function translateStr(inPut){
+		//var e = w[0].replace('\n','');
+		const outPane = document.getElementById("outputMain");
+		const outTwo = document.getElementById("outputTwo");
+		const layerHeight = grabLayerHeight(inPut);
+		
+		let wallsToOffSet = [1,3];
+		let j = '';
+		
+		let codes = buildG(gCode(inPut));
+		
+		for (let x in codes){
+			let k = codes[x];
+			for ( let p in k){
+				j += k[p];
+			}
+		}
+		outTwo.value = j;
+		
+		buildWalls(codes);
+		//let str = raiseWalls(wallsToOffSet,codes,layerHeight);
+		//codes = buildG(codes);
+		//document.getElementById("outputMain").value += str;
+
+	}
+	
+	*/
+	
+	
+</script>
+
+</head>
+
+<body>
+
+ <form id="theForm">
+ 
+  <input type="button" value="do it - - - - do it - - - - do it - - - - do it - - - - do it - - - - do it - - - - do it - - - - do it - - - - do it - - - - " onclick="reco();"><br>
+ <textarea rows="80" cols="60" id="inputMain"> </textarea>
+
+ <textarea rows="80" cols="60" id="outputMain"> </textarea>
+
+
+ </form>
+ 
+ <script>
+ 
+ 	//document.getElementById("inputMain").value = "  ";
+	document.getElementById("outputMain").value = "  ";
+	var inPane = document.getElementById("inputMain");
+	//inPane.value = allOfIt;
+	
+	
+	
+	
+	
+	
+		/*
+	function upDateCoordBuffer(b,l){
+		//console.log(b + '\ncur coords');
+		let coords = grabCoords(l);
+		if (coords){
+			console.log(b);
+			b.unshift(coords[1]);
+			b.unshift(coords[0]);
+			b = checkLength(b);
+			console.log(b);
+		}
+		//console.log(b);
+		return b;
+	}
+	function grabCoords(l){
+		let i = false;
+		let j = false;
+		
+		for (var x in l){
+			//console.log('grabbing coords: \n' + l + '\n' + x + ' of ' + (l.length-1));
+			if (l[x].startsWith('X')) {
+				i = parseFloat(l[x].substring(1));
+				//console.log(i);
+			}else if (l[x].startsWith('Y')){
+				j = parseFloat(l[x].substring(1));
+				//console.log(j);
+			}else if (l[x].startsWith('F')){
+				//console.log('setting feed rate');
+			}
+		}
+		if (i && j){
+			console.log([i,j]);
+			return [i,j];
+		}else{
+			return false;
+		}
+	}
+	*/
+			
+		/*
+		for (let x in ar){
+			
+			let curLine = ar[x];
+			
+			if (curLine[0].startsWith(';')){
+				//lines[x] = false;
+				if (curLine[0].startsWith(';TYPE:WALL')){
+					
+					typeWall = true;
+					if (curLine[0].endsWith('-OUTER')){
+						islands++;
+					}
+					
+				}else{
+					typeWall = false;
+				}
+				str += x + ' : ' + curLine + '\n';
+			} else if (curLine[0].startsWith('G0')){
+				coordBuffer = upDateCoordBuffer(coordBuffer,curLine);
+				str += x + ' : ' + coordBuffer + '\n';
+			} else if (curLine[0].startsWith('G1')){
+				coordBuffer = upDateCoordBuffer(coordBuffer,curLine);
+				if (typeWall){
+					if (segmentLength.length.length > 0){
+						for (let y in curLine){
+						}
+					}
+				}
+				str += x + ' : ' + getDistance(coordBuffer) + '\n\t' + curLine + '\n';
+			} else {
+				str += x + ' : ' + curLine + '\n';
+			}
+		}
+		
+		outPane.value = str;
+		
+				
+			
+		
+		for (var x in ar){
+			let isLine = ar[x].split(' ');
+			outPane.value += isLine + '\n';
+			if (isLine[0].startsWith('G0')){
+				coordBuffer = upDateCoordBuffer(coordBuffer,isLine);
+				console.log('Current Layer: ' + curLayer);
+			} else if (isLine[0].startsWith(';TYPE:WALL')){
+				while (x < ar.length){
+					if (isLine[0].startsWith('G1')){
+						if (isLine[isLine.length-1].startsWith('E')){
+							coordBuffer = upDateCoordBuffer(coordBuffer,isLine);
+							console.log('G1 - E\nCurrent Layer: ' + curLayer);
+							break;
+						} else if (xyPresent(isLine)){
+							coordBuffer = upDateCoordBuffer(coordBuffer,isLine);
+							console.log('G1\nCurrent Layer: ' + curLayer);
+							break;
+						}
+					} else if (isLine[0].startsWith('G0')){
+						coordBuffer = upDateCoordBuffer(coordBuffer,isLine);
+						console.log('G0\nCurrent Layer: ' + curLayer);
+						break;
+					}
+					x++;
+					isLine = ar[x].split(' ');
+				} 
+						
+			} else if (isLine[0].startsWith(';LAYER:')){
+				let layAr = ar[x].split(':');
+				curLayer = parseInt(layAr[1]);
+			} else if (isLine[0].startsWith(';')){
+				//str
+			}
+			console.log('the line: ' + isLine);
+		}*/
+		//console.log(w[0]);
+		
+		
+		
+		
+		
+		
+		//outPane.value = layerHeight + '\n' ;
+	
+	
+	
+</script>
+
+</body>
+
+</html>
