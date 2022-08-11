@@ -17,7 +17,7 @@ verbose output should be enabled
 
 anything that changes the order that perimeters print in should be disabled.
 
-
+currently, only 0.2 layer heights and 4 perimeters. (I know, not very capable, im working on it)
 
 Have fun,
 Bryan MacLee
