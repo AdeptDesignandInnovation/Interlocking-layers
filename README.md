@@ -21,7 +21,11 @@ anything that changes the order that perimeters print in should be disabled.
 
 oh... and turn off retraction for now (sorry)
 
-currently, only 0.2 layer heights and 4 perimeters. (I know, not very capable, im working on it)
+Any layer height is now acceptable. Remember to set the layer height in the coresponding input field. (really should just grab it out of the gcode.)
+
+An extrusion multiplier field is now functional. This ONLY affects the raised perimeters, and is not applied to top or bottom perimeters.
+
+Even number of perimeters.
 
 the code skips the first layer to allow for a thicker first layer.
 
