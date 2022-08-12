@@ -15,6 +15,8 @@ Multiple islands seems to work fine.
 
 verbose output should be enabled
 
+relative e steps should also be enabled
+
 anything that changes the order that perimeters print in should be disabled. 
 
 oh... and turn off retraction for now (sorry)
