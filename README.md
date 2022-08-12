@@ -15,11 +15,13 @@ Multiple islands seems to work fine.
 
 verbose output should be enabled
 
-anything that changes the order that perimeters print in should be disabled.
+anything that changes the order that perimeters print in should be disabled. 
 
 oh... and turn off retraction for now (sorry)
 
 currently, only 0.2 layer heights and 4 perimeters. (I know, not very capable, im working on it)
+
+the code skips the first layer to allow for a thicker first layer.
 
 copy gcode into the text area on the left, click doit, copy the new gcode from text area on the right.
 
