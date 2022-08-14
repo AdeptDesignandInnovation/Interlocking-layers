@@ -21,6 +21,8 @@ anything that changes the order that perimeters print in should be disabled.
 
 oh... and turn off retraction for now (sorry)
 
+z-seam aligned. (just to reduce variables that would break the output gcode)
+
 Any layer height is now acceptable. Remember to set the layer height in the coresponding input field. (really should just grab it out of the gcode.)
 
 An extrusion multiplier field is now functional. This ONLY affects the raised perimeters, and is not applied to top or bottom perimeters.
