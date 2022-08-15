@@ -48,6 +48,7 @@
 		let os = document.getElementById('inputMain').value;
 		let layerHeight = document.getElementById('LH').value;
 		let extrusionMultiplier = document.getElementById('EM').value;
+		let feedRate = document.getElementById('FR').value * 60;
 		let sections = splitSections(os);
 		let endCode = sections[2] + sections[3] + sections[4]; 
 		
@@ -81,7 +82,7 @@
 						}
 					}
 					let ghb = ((y*layerHeight)+(layerHeight/2));
-					gString += curStr[0] + '\nG1 Z' + ghb.toFixed(3) + ' F7800.000 ; interlock height\n' + tempStr;
+					gString += curStr[0] + '\nG1 Z' + ghb.toFixed(3) + ' F' + feedRate + ' ; interlock height\n' + tempStr;
 
 			}else if (y == (layers.length-1)){
 				//extrusion * .5
@@ -125,6 +126,8 @@
   <input type="number" id="LH" name="LH" value=".20">
      <label for="EM">Extrusion Multiplier:</label>
   <input type="number" id="EM" name="EM" value="1.050">
+       <label for="EM">MM \ S:</label>
+  <input type="number" id="FR" name="FR" value="20">
   <input type="button" value="do it - - - - do it - - - - do it - - - - do it - - - - do it - - - - do it - - - - do it - - - - do it - - - - do it - - - - " onclick="reco();"><br>
  <textarea rows="40" cols="60" id="inputMain"> </textarea>
 
