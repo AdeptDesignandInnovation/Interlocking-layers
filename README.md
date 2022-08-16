@@ -31,7 +31,7 @@ Even number of perimeters.
 
 the code skips the first layer to allow for a thicker first layer.
 
-copy gcode into the text area on the left, click doit, copy the new gcode from text area on the right.
+copy gcode into the text area on the left, click process, copy the new gcode from text area on the right.
 
 A discord channel to discuss this concept on.
 https://discord.gg/6sPey3wW47
