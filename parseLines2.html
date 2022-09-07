@@ -14,7 +14,7 @@
 	
 	function splitPerimeters(gCode){
 		let hre = gCode.split('move to first perimeter point');
-		console.log(hre);
+		//console.log(hre);
 		return hre;
 	}
 	
@@ -49,8 +49,12 @@
 		let layerHeight = document.getElementById('LH').value;
 		let extrusionMultiplier = document.getElementById('EM').value;
 		let feedRate = document.getElementById('FR').value * 60;
+		let retractRate = document.getElementById('RTS').value * 60;
+		let retractDist = document.getElementById('RET').value;
 		let sections = splitSections(os);
-		let endCode = sections[2] + sections[3] + sections[4]; 
+		let endCode = sections[2] + sections[3] + sections[4];
+		let retract = '\nG1 F' + retractRate + " E-" + retractDist + ' ; retract\n';
+		let reprime = 'G1 F' + retractRate + " E" + retractDist + " ; reprime\n";
 		
 		gString += sections[0];
 
@@ -61,28 +65,44 @@
 			if ((y > 1)&&(y < (layers.length-1))){
 				let perimeters = splitPerimeters(layers[y]);
 				let curStr = parseGcode(perimeters);
-					
-					let tempStr = '';
-					let b = curStr[1].split('\n');
-					for (let p in b){
-						if (b[p].includes(' E')){
-							let s = b[p].split(' E');
-							let ext = parseFloat(s[1]);
-							if ( y == 2) {
-								ext = ext*1.5;
-							} else {
-								ext = ext*extrusionMultiplier;
-							}
-							
-							ext = ext.toFixed(5);
-							let rln = s[0] + ' E' + ext + ' ; raised perimeter\n';
-							tempStr += rln;
-						}else{
-							tempStr += b[p] + '\n';
-						}
+				
+				let tempStr = '\n';
+				let retStr = '\n';
+				
+				let m = curStr[0].split('\n');
+				for (let g in m){
+					if (m[g].includes(' E')){
+						retStr += m[g] + '\n';
+					}else if ((m[g].includes(' X')) && (m[g].includes(' Y'))) {
+						retStr += retract + m[g] + '\n' + reprime;
+					}else{
+						retStr += '\n' + m[g];
 					}
-					let ghb = ((y*layerHeight)+(layerHeight/2));
-					gString += curStr[0] + '\nG1 Z' + ghb.toFixed(3) + ' F' + feedRate + ' ; interlock height\n' + tempStr;
+				}	
+				
+				let b = curStr[1].split('\n');
+				for (let p in b){
+					if (b[p].includes(' E')){
+						let s = b[p].split(' E');
+						let ext = parseFloat(s[1]);
+						if ( y == 2) {
+							ext = ext*1.5;
+						} else {
+							ext = ext*extrusionMultiplier;
+						}
+						
+						ext = ext.toFixed(5);
+						//			'G1 F' + retractRate + " E" + retractDist + " ; reprime\n" +		G1 F' + retractRate + " E-" + retractDist + ' ; retract\n'
+						let rln = s[0] + ' E' + ext + ' ; raised perimeter\n';
+						tempStr += rln;
+					}else if ((b[p].includes(' X')) && (b[p].includes(' Y'))) {
+						tempStr += retract + b[p] + '\n' + reprime;
+					}else{
+						tempStr += b[p] + '\n';
+					}
+				}
+				let ghb = ((y*layerHeight)+(layerHeight/2));
+				gString += '\n' + retStr + '\nG1 Z' + ghb.toFixed(3) + ' F' + feedRate + ' ; interlock height\n' + tempStr;
 
 			}else if (y == (layers.length-1)){
 				//extrusion * .5
@@ -122,13 +142,26 @@
 <body>
 
  <form id="theForm">
-   <label for="LH">Layer Height:</label>
+ 
+  <label for="LH">Layer Height:</label>
   <input type="number" id="LH" name="LH" value=".20">
-     <label for="EM">Extrusion Multiplier:</label>
+  
+  <label for="EM">Extrusion Multiplier:</label>
   <input type="number" id="EM" name="EM" value="1.050">
-       <label for="EM">MM \ S:</label>
+  
+  <label for="FR">MM \ S:</label>
   <input type="number" id="FR" name="FR" value="20">
+  
+  <br>
+  
+  <label for="RET">Retraction Distance:</label>
+  <input type="number" id="RET" name="RET" value="2.0">
+  
+  <label for="RTS">Retraction speed:</label>
+  <input type="number" id="RTS" name="RTS" value="45">
+  
   <input type="button" value="PROCESS" onclick="reco();"><br>
+  
  <textarea rows="40" cols="60" id="inputMain"> </textarea>
 
  <textarea rows="40" cols="60" id="outputMain"> </textarea>
