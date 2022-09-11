@@ -18,6 +18,7 @@
 		return hre;
 	}
 	
+	
 	function parseGcode(perimCode) {
 
 		let cutOut = "";
@@ -50,7 +51,8 @@
 		let extrusionMultiplier = document.getElementById('EM').value;
 		let feedRate = document.getElementById('FR').value * 60;
 		let retractRate = document.getElementById('RTS').value * 60;
-		let retractDist = document.getElementById('RET').value;
+		let retractDist = document.getElementById('RET').value * 1;
+		let firstHeight = document.getElementById('FLH').value * 1;
 		let sections = splitSections(os);
 		let endCode = sections[2] + sections[3] + sections[4];
 		let retract = '\nG1 F' + retractRate + " E-" + retractDist + ' ; retract\n';
@@ -101,7 +103,7 @@
 						tempStr += b[p] + '\n';
 					}
 				}
-				let ghb = ((y*layerHeight)+(layerHeight/2));
+				let ghb = ((y-1)*layerHeight)+(layerHeight/2) + firstHeight;
 				gString += '\n' + retStr + '\nG1 Z' + ghb.toFixed(3) + ' F' + feedRate + ' ; interlock height\n' + tempStr;
 
 			}else if (y == (layers.length-1)){
@@ -137,55 +139,94 @@
 	
 </script>
 
+
+<style>
+	.center {
+		text-align: center;
+		color: red;
+	}
+</style>
+
+
 </head>
 
 <body>
 
- <form id="theForm">
+	<form id="theForm">
  
  
-  
-      <input type="file" name="inputfile"
-            id="inputfile">
-    <br>
+		<div id="layerHt">
+			<input type="file" name="inputfile" id="inputfile">
+		</div>
 
-    <script type="text/javascript">
-        document.getElementById('inputfile')
-            .addEventListener('change', function() {
-              
-            var fr=new FileReader();
-            fr.onload=function(){
-                document.getElementById('inputMain').value = fr.result;
-            }
-              
-            fr.readAsText(this.files[0]);
-        })
-    </script>
-  <label for="LH">Layer Height:</label>
-  <input type="number" id="LH" name="LH" value=".20">
-  <br>
-  <label for="EM">Extrusion Multiplier:</label>
-  <input type="number" id="EM" name="EM" value="1.050">
-  <br>
-  <label for="FR">MM \ S:</label>
-  <input type="number" id="FR" name="FR" value="20">
-  
-  <br>
-  
-  <label for="RET">Retraction Distance:</label>
-  <input type="number" id="RET" name="RET" value="2.0">
-  <br>
-  <label for="RTS">Retraction speed:</label>
-  <input type="number" id="RTS" name="RTS" value="45">
-  <br>
-  <input type="button" value="PROCESS" onclick="reco();"><br>
-  
- <textarea rows="60" cols="70" id="inputMain"> </textarea>
+    	<br>
 
- <textarea rows="60" cols="70" id="outputMain"> </textarea>
+		<script type="text/javascript">
+			document.getElementById('inputfile')
+				.addEventListener('change', function() {
+				
+				var fr=new FileReader();
+				fr.onload=function(){
+					document.getElementById('inputMain').value = fr.result;
+				}
+				
+				fr.readAsText(this.files[0]);
+			})
+		</script>
+	
+
+		<div id="layerHt">
+			<label for="LH">Layer Height:</label>
+			<input type="number" id="LH" name="LH" value=".12">
+		</div>
+
+		<br>
+
+		<div id="firstLayerHt">
+			<label for="FLH">First Layer Height:</label>
+			<input type="number" id="FLH" name="FLH" value=".32">
+		</div>
+
+		<br>
+
+		<div id='extMulti'>
+			<label for="EM">Extrusion Multiplier:</label>
+			<input type="number" id="EM" name="EM" value="1.050">
+		</div>
+
+		<br>
+
+		<div id='MMS'>
+			<label for="FR">MM \ S:</label>
+			<input type="number" id="FR" name="FR" value="15">
+		</div>
+
+		<br>
+
+		<div id='retrct'> 
+			<label for="RET">Retraction Distance:</label>
+			<input type="number" id="RET" name="RET" value="2.0">
+		</div>
+
+		<br>
+
+		<div id='retSpd'>
+			<label for="RTS">Retraction speed:</label>
+			<input type="number" id="RTS" name="RTS" value="25">
+		</div>
+
+		<br>
+
+		<input type="button" value="PROCESS" onclick="reco();"><br>
+
+		
+		
+		<textarea rows="60" cols="70" id="inputMain"> </textarea>
+
+		<textarea rows="60" cols="70" id="outputMain"> </textarea>
 
 
- </form>
+</form>
  
  <script>
  
